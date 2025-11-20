@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,27 +46,34 @@ fun ventanaIA(modifier:Modifier) {
     val scope = CoroutineScope(Dispatchers.Default)
     var textoIA by remember { mutableStateOf("") }
     var cantidadLanzamientos by remember { mutableIntStateOf(0) }
+    var pregunta by remember { mutableStateOf("") }
 
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally, // centra horizontalmente
         verticalArrangement = Arrangement.Top // empieza desde arriba
     ) {
-        Text("Aquí esta IA")
-        Text(cantidadLanzamientos.toString())
-        Text(textoIA)
-        Button({
-            scope.launch {
-                // Antes del if de cantidad lanzamientos se ejecutaba en bucle un montón de solicitudes
-                // lo limpio es controlar que no se lanzen multiples solicitudes con un booleano
-                // pero con el numero podemos manipularlo para ver mas respues seguidas
-                if(cantidadLanzamientos<1) {
-                    cantidadLanzamientos +=1
-                    val model = Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel("gemini-2.5-flash")
+        item {
+            Text("Aquí esta IA")
+            Text(cantidadLanzamientos.toString())
+            Text(textoIA)
+            OutlinedTextField(
+                value = pregunta,
+                onValueChange = { pregunta = it },
+                label = { Text("Pregunta") }
+            )
+            Button({
+                scope.launch {
+                    // Antes del if de cantidad lanzamientos se ejecutaba en bucle un montón de solicitudes
+                    // lo limpio es controlar que no se lanzen multiples solicitudes con un booleano
+                    // pero con el numero podemos manipularlo para ver mas respues seguidas
+                    cantidadLanzamientos += 1
+                    val model = Firebase.ai(backend = GenerativeBackend.googleAI())
+                        .generativeModel("gemini-2.5-flash")
                     // Provide a prompt that contains text
-                    val prompt = "Hola"
+                    val prompt = pregunta
                     // model.generateContent tiene un delay, el de la IA mientras calcula la respuesta que nos va a dar.
                     try {
                         textoIA = "Se ha realizado la consulta al modelo"
@@ -74,8 +83,8 @@ fun ventanaIA(modifier:Modifier) {
                         textoIA = "Error al generar contenido: ${e.localizedMessage}"
                     }
                 }
-            }
-        }) {Text("Usar IA") }
+            }) { Text("Usar IA") }
+        }
     }
 }
 
